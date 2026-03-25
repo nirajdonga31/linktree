@@ -7,8 +7,8 @@ import analyticsRoutes from './routes/analytics';
 // Load env vars
 dotenv.config();
 
-// Import Firebase Admin (initializes on import)
-import './lib/firebase';
+// Initialize Firebase (imports trigger initialization)
+import './firebase';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -18,7 +18,7 @@ app.use(express.json());
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', firebase: process.env.FIREBASE_PROJECT_ID || 'not-configured' });
+  res.json({ status: 'ok' });
 });
 
 // Routes

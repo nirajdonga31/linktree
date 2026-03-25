@@ -1,64 +1,43 @@
 import { Router } from 'express';
-import type { Analytics } from '@linktree/shared';
+import { AnalyticsTable } from '../firebase';
 
 const router = Router();
 
-// In-memory storage for now
-const analytics: Analytics[] = [];
-
 // Track a click
-router.post('/track', (req, res) => {
-  const { userId, linkId } = req.body;
-  const today = new Date().toISOString().split('T')[0];
-  
-  const existing = analytics.find(
-    (a) => a.userId === userId && a.linkId === linkId && a.date === today
-  );
-  
-  if (existing) {
-    existing.clicks += 1;
-  } else {
-    analytics.push({
-      id: Date.now().toString(),
-      userId,
-      linkId,
-      date: today,
-      clicks: 1,
-    });
+router.post('/track', async (req, res) => {
+  try {
+    const { userId, linkId } = req.body;
+    const today = new Date().toISOString().split('T')[0];
+    
+    await AnalyticsTable.trackClick(userId, linkId, today);
+    res.json({ data: { success: true } });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to track click', code: 'TRACK_ERROR' });
   }
-  
-  res.json({ data: { success: true } });
 });
 
 // Get analytics for a user
-router.get('/:userId', (req, res) => {
-  const { userId } = req.params;
-  const { range = '7d' } = req.query;
-  
-  const days = range === '30d' ? 30 : range === '90d' ? 90 : 7;
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - days);
-  
-  const userAnalytics = analytics.filter((a) => {
-    const date = new Date(a.date);
-    return a.userId === userId && date >= cutoff;
-  });
-  
-  const totalClicks = userAnalytics.reduce((sum, a) => sum + a.clicks, 0);
-  
-  // Group by date for chart data
-  const byDate = userAnalytics.reduce((acc, a) => {
-    acc[a.date] = (acc[a.date] || 0) + a.clicks;
-    return acc;
-  }, {} as Record<string, number>);
-  
-  res.json({
-    data: {
-      totalClicks,
-      byDate,
-      details: userAnalytics,
-    },
-  });
+router.get('/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { range = '7d' } = req.query;
+    
+    const days = range === '30d' ? 30 : range === '90d' ? 90 : 7;
+    const endDate = new Date().toISOString().split('T')[0];
+    const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    const analytics = await AnalyticsTable.getByUserId(userId, startDate, endDate);
+    const totalClicks = await AnalyticsTable.getTotalClicks(userId);
+    
+    res.json({
+      data: {
+        totalClicks,
+        analytics,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch analytics', code: 'FETCH_ERROR' });
+  }
 });
 
 export default router;

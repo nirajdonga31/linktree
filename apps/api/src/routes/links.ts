@@ -1,80 +1,60 @@
 import { Router } from 'express';
-import type { Link, CreateLinkInput, UpdateLinkInput } from '@linktree/shared';
+import { LinksTable } from '../firebase';
 
 const router = Router();
 
-// In-memory storage for now - replace with Firestore
-const links: Link[] = [];
-
 // Get all links for a user
-router.get('/:userId', (req, res) => {
-  const { userId } = req.params;
-  const userLinks = links
-    .filter((l) => l.userId === userId)
-    .sort((a, b) => a.order - b.order);
-  res.json({ data: userLinks });
+router.get('/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const links = await LinksTable.getByUserId(userId);
+    res.json({ data: links });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch links', code: 'FETCH_ERROR' });
+  }
 });
 
 // Create a new link
-router.post('/', (req, res) => {
-  const input: CreateLinkInput = req.body;
-  
-  const link: Link = {
-    id: Date.now().toString(),
-    userId: 'temp-user-id', // TODO: Get from auth
-    title: input.title,
-    url: input.url,
-    isActive: true,
-    order: links.length,
-    clickCount: 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-  
-  links.push(link);
-  res.status(201).json({ data: link });
+router.post('/', async (req, res) => {
+  try {
+    const link = await LinksTable.create(req.body);
+    res.status(201).json({ data: link });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create link', code: 'CREATE_ERROR' });
+  }
 });
 
 // Update a link
-router.put('/:id', (req, res) => {
-  const { id } = req.params;
-  const input: UpdateLinkInput = req.body;
-  
-  const index = links.findIndex((l) => l.id === id);
-  if (index === -1) {
-    return res.status(404).json({ error: 'Link not found', code: 'NOT_FOUND' });
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const link = await LinksTable.update(id, req.body);
+    res.json({ data: link });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update link', code: 'UPDATE_ERROR' });
   }
-  
-  links[index] = { ...links[index], ...input, updatedAt: new Date().toISOString() };
-  res.json({ data: links[index] });
 });
 
 // Delete a link
-router.delete('/:id', (req, res) => {
-  const { id } = req.params;
-  const index = links.findIndex((l) => l.id === id);
-  
-  if (index === -1) {
-    return res.status(404).json({ error: 'Link not found', code: 'NOT_FOUND' });
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await LinksTable.delete(id);
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete link', code: 'DELETE_ERROR' });
   }
-  
-  links.splice(index, 1);
-  res.status(204).send();
 });
 
 // Reorder links
-router.patch('/reorder', (req, res) => {
-  const { linkIds }: { linkIds: string[] } = req.body;
-  
-  linkIds.forEach((id, index) => {
-    const link = links.find((l) => l.id === id);
-    if (link) {
-      link.order = index;
-      link.updatedAt = new Date().toISOString();
-    }
-  });
-  
-  res.json({ data: { success: true } });
+router.patch('/reorder', async (req, res) => {
+  try {
+    const { userId, linkIds } = req.body;
+    await LinksTable.reorder(userId, linkIds);
+    res.json({ data: { success: true } });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to reorder links', code: 'REORDER_ERROR' });
+  }
 });
 
 export default router;

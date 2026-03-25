@@ -136,7 +136,7 @@ export default function Home() {
         </ScrollReveal>
       </section>
 
-      {/* Feature 1 */}
+      {/* Feature 1 - White BG */}
       <section className="bg-white py-20 px-6">
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
           <ScrollReveal>
@@ -168,7 +168,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Feature 2 */}
+      {/* Feature 2 - Dark BG */}
       <section className="bg-[#1a1a1a] py-20 px-6">
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
           <ScrollReveal delay={200}>
@@ -200,7 +200,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Feature 3 */}
+      {/* Feature 3 - White BG with Analytics Image */}
       <section className="bg-white py-20 px-6">
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
           <ScrollReveal>
@@ -230,6 +230,117 @@ export default function Home() {
             </div>
           </ScrollReveal>
         </div>
+      </section>
+
+      {/* Purple BG Section - New Image */}
+      <section className="bg-[#7c5cff] py-20 px-6">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+          <ScrollReveal delay={200}>
+            <div className="hover:scale-[1.02] transition-transform duration-500">
+              <img 
+                src="https://cdn.prod.website-files.com/666255f7f2126f4e8cec6f8f/68b80693934ab0ccd4bf7482_home-section-4.avif" 
+                alt="Linktree Features"
+                className="w-full rounded-2xl shadow-2xl"
+              />
+            </div>
+          </ScrollReveal>
+          
+          <ScrollReveal>
+            <div>
+              <h2 className="text-[40px] font-bold text-white mb-4 leading-tight">
+                Grow your following across all platforms
+              </h2>
+              <p className="text-[18px] text-white/90 leading-relaxed">
+                Connect with your audience everywhere they are. From social media to email, your Linktree brings it all together in one beautiful link.
+              </p>
+              <Link 
+                href="/login" 
+                className="inline-block mt-6 bg-white text-[#7c5cff] px-6 py-3 rounded-full font-bold hover:bg-gray-100 transition"
+              >
+                Get started for free
+              </Link>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* Pink BG Section - Another New Image */}
+      <section className="bg-[#ff6b9d] py-20 px-6">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+          <ScrollReveal>
+            <div>
+              <h2 className="text-[40px] font-bold text-white mb-4 leading-tight">
+                Monetize your content effortlessly
+              </h2>
+              <p className="text-[18px] text-white/90 leading-relaxed">
+                Accept payments, sell products, and collect tips directly through your Linktree. Turn your followers into customers with built-in commerce tools.
+              </p>
+              <Link 
+                href="/login" 
+                className="inline-block mt-6 bg-white text-[#ff6b9d] px-6 py-3 rounded-full font-bold hover:bg-gray-100 transition"
+              >
+                Get started for free
+              </Link>
+            </div>
+          </ScrollReveal>
+          
+          <ScrollReveal delay={200}>
+            <div className="hover:scale-[1.02] transition-transform duration-500">
+              <img 
+                src="https://cdn.prod.website-files.com/666255f7f2126f4e8cec6f8f/68b80742d1d9216c45c6d6ea_group1597882005.avif" 
+                alt="Monetization"
+                className="w-full rounded-2xl shadow-2xl"
+              />
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* Blue BG Section */}
+      <section className="bg-[#4a90d9] py-20 px-6">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+          <ScrollReveal delay={200}>
+            <div className="hover:scale-[1.02] transition-transform duration-500">
+              <img 
+                src="https://cdn.prod.website-files.com/666255f7f2126f4e8cec6f8f/6882edcf6915328005a76e24_frame1197145639.avif" 
+                alt="Linktree for Business"
+                className="w-full rounded-2xl shadow-2xl"
+              />
+            </div>
+          </ScrollReveal>
+          
+          <ScrollReveal>
+            <div>
+              <h2 className="text-[40px] font-bold text-white mb-4 leading-tight">
+                Trusted by millions of creators
+              </h2>
+              <p className="text-[18px] text-white/90 leading-relaxed">
+                From influencers to entrepreneurs, podcasters to artists — Linktree is the link in bio tool that helps everyone share more.
+              </p>
+              <Link 
+                href="/login" 
+                className="inline-block mt-6 bg-white text-[#4a90d9] px-6 py-3 rounded-full font-bold hover:bg-gray-100 transition"
+              >
+                Get started for free
+              </Link>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* As Featured In - Press Logos */}
+      <section className="bg-[#f5f5f5] py-16 px-6">
+        <ScrollReveal>
+          <div className="max-w-4xl mx-auto text-center">
+            <p className="text-[#1a1a1a] font-semibold mb-8">As featured in...</p>
+            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 opacity-60">
+              <img src="https://cdn.prod.website-files.com/666255f7f2126f4e8cec6f8f/68ccc14fd2540b94aa830d59_forbes-blue-grey.avif" alt="Forbes" className="h-8 w-auto" />
+              <img src="https://cdn.prod.website-files.com/666255f7f2126f4e8cec6f8f/68ccc14fe75d954138be7db4_mashable_logo_(2021)1.avif" alt="Mashable" className="h-8 w-auto" />
+              <img src="https://cdn.prod.website-files.com/666255f7f2126f4e8cec6f8f/68ccc14f97d207e420a58182_insiderlogo1.avif" alt="Insider" className="h-8 w-auto" />
+              <img src="https://cdn.prod.website-files.com/666255f7f2126f4e8cec6f8f/68ccc14f1230aaa3bbd0a99a_entrepreneur-blue-grey__2_.avif" alt="Entrepreneur" className="h-8 w-auto" />
+            </div>
+          </div>
+        </ScrollReveal>
       </section>
 
       {/* Testimonials */}

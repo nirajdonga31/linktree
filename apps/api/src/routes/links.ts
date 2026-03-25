@@ -17,7 +17,8 @@ router.get('/:userId', async (req, res) => {
 // Create a new link
 router.post('/', async (req, res) => {
   try {
-    const link = await LinksTable.create(req.body);
+    const { userId, ...data } = req.body;
+    const link = await LinksTable.create(userId, data);
     res.status(201).json({ data: link });
   } catch (error) {
     res.status(500).json({ error: 'Failed to create link', code: 'CREATE_ERROR' });
@@ -28,7 +29,8 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const link = await LinksTable.update(id, req.body);
+    const { userId, ...data } = req.body;
+    const link = await LinksTable.update(userId, id, data);
     res.json({ data: link });
   } catch (error) {
     res.status(500).json({ error: 'Failed to update link', code: 'UPDATE_ERROR' });
@@ -39,7 +41,8 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await LinksTable.delete(id);
+    const { userId } = req.body;
+    await LinksTable.delete(userId, id);
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete link', code: 'DELETE_ERROR' });

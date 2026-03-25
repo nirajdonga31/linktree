@@ -2,12 +2,14 @@ import { db } from '../firebase';
 import { Analytics } from '@linktree/shared';
 import admin from 'firebase-admin';
 
-const COLLECTION = 'analytics';
+// Subcollection under linktree/users/{userId}/analytics
+const getCollection = (userId: string) => 
+  db.collection('linktree').doc('data').collection('users').doc(userId).collection('analytics');
 
 export const AnalyticsTable = {
   async trackClick(userId: string, linkId: string, date: string): Promise<void> {
-    const docId = `${userId}_${linkId}_${date}`;
-    const ref = db.collection(COLLECTION).doc(docId);
+    const docId = `${linkId}_${date}`;
+    const ref = getCollection(userId).doc(docId);
     
     await ref.set({
       userId,
@@ -18,9 +20,7 @@ export const AnalyticsTable = {
   },
 
   async getByUserId(userId: string, startDate: string, endDate: string): Promise<Analytics[]> {
-    const snapshot = await db
-      .collection(COLLECTION)
-      .where('userId', '==', userId)
+    const snapshot = await getCollection(userId)
       .where('date', '>=', startDate)
       .where('date', '<=', endDate)
       .get();
@@ -29,11 +29,7 @@ export const AnalyticsTable = {
   },
 
   async getTotalClicks(userId: string): Promise<number> {
-    const snapshot = await db
-      .collection(COLLECTION)
-      .where('userId', '==', userId)
-      .get();
-    
+    const snapshot = await getCollection(userId).get();
     return snapshot.docs.reduce((sum, doc) => sum + (doc.data().clicks || 0), 0);
   },
 };

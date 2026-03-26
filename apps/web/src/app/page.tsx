@@ -159,7 +159,7 @@ export default function Home() {
           <ScrollReveal delay={200}>
             <div className="hover:scale-[1.02] transition-transform duration-500">
               <img 
-                src="https://cdn.prod.website-files.com/666255f7f2126f4e8cec6f8f/680c13b834d3994a796896bd_all%20your%20things.avif" 
+                src="https://assets.production.linktr.ee/static/curate/customise_your_linktree.webm" autoPlay loop muted playsInline 
                 alt="All your things"
                 className="w-full rounded-2xl"
               />

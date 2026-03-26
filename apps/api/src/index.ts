@@ -1,14 +1,8 @@
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
+import './firebase';
 import linksRoutes from './routes/links';
 import analyticsRoutes from './routes/analytics';
-
-// Load env vars
-dotenv.config();
-
-// Initialize Firebase (imports trigger initialization)
-import './firebase';
 
 const app = express();
 const PORT = process.env.PORT || 3001;

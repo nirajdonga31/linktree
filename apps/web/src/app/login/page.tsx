@@ -82,7 +82,7 @@ export default function LoginPage() {
             </div>
 
             <div className="text-right">
-              <Link href="#" className="text-[#2665d6] text-sm font-semibold hover:underline">
+              <Link href="/signup" className="text-[#2665d6] text-sm font-semibold hover:underline">
                 Forgot password?
               </Link>
             </div>
@@ -98,7 +98,7 @@ export default function LoginPage() {
           {/* Sign Up Link */}
           <p className="text-center mt-6 text-[#676b5f]">
             Don&apos;t have an account?{' '}
-            <Link href="#" className="text-[#2665d6] font-semibold hover:underline">
+            <Link href="/signup" className="text-[#2665d6] font-semibold hover:underline">
               Sign up
             </Link>
           </p>

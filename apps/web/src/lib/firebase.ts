@@ -20,30 +20,44 @@ function initializeFirebase(): void {
   
   // Only initialize on client side
   if (typeof window === 'undefined') {
+    console.log('[Firebase] Skipping initialization on server side');
     return;
   }
   
   const configJson = process.env.NEXT_PUBLIC_FIREBASE_CONFIG;
   
   if (!configJson) {
-    console.warn('NEXT_PUBLIC_FIREBASE_CONFIG not found in .env.local - Firebase features will not work');
+    console.error('[Firebase] NEXT_PUBLIC_FIREBASE_CONFIG not found in environment');
     return;
   }
   
   try {
     const firebaseConfig: FirebaseOptions = JSON.parse(configJson);
+    
+    if (!firebaseConfig.apiKey || !firebaseConfig.authDomain) {
+      console.error('[Firebase] Invalid config: apiKey or authDomain missing');
+      return;
+    }
+    
+    console.log('[Firebase] Initializing with project:', firebaseConfig.projectId);
+    
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     authInstance = getAuth(app);
     dbInstance = getFirestore(app);
     storageInstance = getStorage(app);
     initialized = true;
+    
+    console.log('[Firebase] Successfully initialized');
+    
   } catch (error) {
-    console.error('Failed to initialize Firebase:', error);
+    console.error('[Firebase] Failed to initialize:', error);
   }
 }
 
 // Initialize on module load (only works on client)
-initializeFirebase();
+if (typeof window !== 'undefined') {
+  initializeFirebase();
+}
 
 // Export instances - use mocks if not initialized (SSR/build time)
 export const auth: Auth = authInstance || mockAuth;
@@ -53,7 +67,7 @@ export const googleProvider = new GoogleAuthProvider();
 
 // Helper to check if Firebase is ready
 export function isFirebaseReady(): boolean {
-  return initialized;
+  return initialized && !!authInstance;
 }
 
 // Lazy initialization helpers for components that need to ensure Firebase is ready
@@ -76,6 +90,15 @@ export function getStorageInstance(): FirebaseStorage {
     initializeFirebase();
   }
   return storageInstance || mockStorage;
+}
+
+// Debug helper to check status
+export function getFirebaseStatus(): { initialized: boolean; hasAuth: boolean; projectId?: string } {
+  return { 
+    initialized, 
+    hasAuth: !!authInstance,
+    projectId: app?.options?.projectId || undefined
+  };
 }
 
 export default app;

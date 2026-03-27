@@ -22,7 +22,6 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useAuth } from '@/hooks/use-auth';
 import { useLinks } from '@/hooks/use-links';
-import MobilePreview from '@/components/mobile-preview';
 import type { Link as LinkType } from '@linktree/shared';
 
 // Sortable link item component
@@ -504,11 +503,6 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Right Column - Mobile Preview */}
-          <div className="hidden lg:block">
-            <div className="sticky top-24">
-              <MobilePreview />
-            </div>
           </div>
         </div>
       </main>

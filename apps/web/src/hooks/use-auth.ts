@@ -54,7 +54,7 @@ const createUserFromFirebase = (firebaseUser: FirebaseUser): User => ({
 export const useAuth = create<AuthState>((set, get) => ({
   user: null,
   firebaseUser: null,
-  loading: true,
+  loading: false,
   error: null,
   firebaseReady: false,
   setUser: (user) => set({ user }),

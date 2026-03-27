@@ -21,23 +21,45 @@ const scrollbarStyles = `
 `;
 
 interface MobilePreviewProps {
-  links?: { id: string; title: string; url: string; isActive: boolean }[];
+  links?: { id: string; title: string; url: string; isActive: boolean; isStarred?: boolean }[];
 }
+
+// Default home pages for social media platforms
+const getDefaultUrl = (title: string): string => {
+  const defaults: Record<string, string> = {
+    'YouTube': 'https://youtube.com',
+    'Instagram': 'https://instagram.com',
+    'X': 'https://x.com',
+    'Spotify': 'https://spotify.com',
+    'Pinterest': 'https://pinterest.com',
+    'TikTok': 'https://tiktok.com',
+    'LinkedIn': 'https://linkedin.com',
+    'Facebook': 'https://facebook.com',
+    'Snapchat': 'https://snapchat.com',
+    'Twitch': 'https://twitch.tv',
+    'Discord': 'https://discord.com',
+    'WhatsApp': 'https://whatsapp.com',
+    'Telegram': 'https://telegram.org',
+    'Behance': 'https://behance.net',
+  };
+  return defaults[title] || 'https://linktr.ee';
+};
 
 export default function MobilePreview({ links: propLinks }: MobilePreviewProps) {
   const { user } = useAuth();
   const { links: userLinks } = useLinks(user?.uid);
 
+  // Use prop links if provided (already sorted by parent), otherwise fall back to user links or defaults
   const displayLinks = propLinks && propLinks.length > 0
-    ? propLinks.filter((l) => l.isActive)
+    ? propLinks
     : userLinks.filter((l) => l.isActive).length > 0
     ? userLinks.filter((l) => l.isActive)
     : [
-        { id: '1', title: 'YouTube', url: '#', isActive: true },
-        { id: '2', title: 'Instagram', url: '#', isActive: true },
-        { id: '3', title: 'X', url: '#', isActive: true },
-        { id: '4', title: 'Spotify', url: '#', isActive: true },
-        { id: '5', title: 'Pinterest', url: '#', isActive: true },
+        { id: '1', title: 'YouTube', url: '', isActive: true, isStarred: false },
+        { id: '2', title: 'Instagram', url: '', isActive: true, isStarred: false },
+        { id: '3', title: 'X', url: '', isActive: true, isStarred: false },
+        { id: '4', title: 'Spotify', url: '', isActive: true, isStarred: false },
+        { id: '5', title: 'Pinterest', url: '', isActive: true, isStarred: false },
       ];
 
   const username = user?.displayName?.toLowerCase().replace(/\s+/g, '') || 'user';
@@ -82,19 +104,27 @@ export default function MobilePreview({ links: propLinks }: MobilePreviewProps) 
 
               {/* Links */}
               <div className="space-y-2.5">
-                {displayLinks.slice(0, 6).map((link) => (
-                  <div
-                    key={link.id}
-                    className="w-full py-3 px-4 bg-white/10 backdrop-blur-sm rounded-xl text-sm text-white font-medium text-center relative group cursor-pointer hover:bg-white/20 transition"
-                  >
-                    <span>{link.title}</span>
-                    <button className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition">
-                      <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
+                {displayLinks.slice(0, 6).map((link) => {
+                  // Use custom URL if provided, otherwise use default platform URL
+                  const href = link.url && link.url !== '#' ? link.url : getDefaultUrl(link.title);
+                  
+                  return (
+                    <a
+                      key={link.id}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full py-3 px-4 rounded-xl text-sm text-white font-medium text-center relative group cursor-pointer transition bg-white/10 backdrop-blur-sm hover:bg-white/20"
+                    >
+                      <span>{link.title}</span>
+                      <button className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition">
+                        <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                        </svg>
+                      </button>
+                    </a>
+                  );
+                })}
               </div>
 
               {/* Linktree Branding */}

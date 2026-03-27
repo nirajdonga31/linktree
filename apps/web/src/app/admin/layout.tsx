@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth, useAuthListener } from '@/hooks/use-auth';
 import MobilePreview from '@/components/mobile-preview';
+import { AdminProvider, useAdmin } from './admin-context';
 
 // Global scrollbar styles for admin layout
 const globalScrollbarStyles = `
@@ -245,6 +246,115 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   };
 
   return (
+    <AdminProvider>
+      <AdminLayoutInner>{children}</AdminLayoutInner>
+    </AdminProvider>
+  );
+}
+
+function AdminLayoutInner({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const { user, loading, signOut } = useAuth();
+  const [expandedSections, setExpandedSections] = useState<string[]>(['my-linktree', 'earn']);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const { getActivePlaceholderLinks } = useAdmin();
+
+  useAuthListener();
+
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections((prev) =>
+      prev.includes(sectionId) ? prev.filter((id) => id !== sectionId) : [...prev, sectionId]
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  const username = user?.displayName?.toLowerCase().replace(/\s+/g, '') || 'user';
+  const activePlaceholderLinks = getActivePlaceholderLinks()
+    .sort((a, b) => {
+      // Starred links first
+      if (a.isStarred === b.isStarred) return 0;
+      return a.isStarred ? -1 : 1;
+    })
+    .map(l => ({ 
+      id: l.id, 
+      title: l.title, 
+      url: l.url || '#', 
+      isActive: l.isActive,
+      isStarred: l.isStarred,
+      clickCount: l.clickCount 
+    }));
+
+  const renderNavItem = (item: NavItem, isChild = false) => {
+    const isActive = item.href && pathname === item.href;
+    const hasChildren = item.children && item.children.length > 0;
+    const isExpanded = expandedSections.includes(item.id);
+
+    if (hasChildren) {
+      return (
+        <div key={item.id}>
+          <button
+            onClick={() => toggleSection(item.id)}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg mb-0.5 transition-all duration-200 ${
+              isExpanded ? 'text-gray-900 font-medium' : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className={`transition-colors ${isExpanded ? 'text-gray-900' : 'text-gray-500'}`}>{item.icon}</span>
+              <span className="text-sm">{item.label}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {item.badge && (
+                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{item.badge}</span>
+              )}
+              <svg
+                className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </button>
+          {isExpanded && item.children && (
+            <div className="ml-4 mt-1 space-y-0.5">
+              {item.children.map((child) => renderNavItem(child, true))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <Link
+        key={item.id}
+        href={item.href || '#'}
+        className={`flex items-center justify-between px-3 py-2 rounded-lg mb-0.5 transition-all duration-200 ${
+          isActive
+            ? 'bg-gray-200 text-gray-900 font-medium'
+            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <span className={`transition-colors ${isActive ? 'text-gray-900' : 'text-gray-500'}`}>{item.icon}</span>
+          <span className="text-sm">{item.label}</span>
+        </div>
+        {item.badge && (
+          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{item.badge}</span>
+        )}
+      </Link>
+    );
+  };
+
+  return (
     <>
       <style>{globalScrollbarStyles}</style>
       <div className="min-h-screen flex bg-[#F5F5F5]">
@@ -350,22 +460,40 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
 
           {/* Right Sidebar - Mobile Preview & Actions */}
-          <div className="w-[360px] hidden xl:block flex-shrink-0">
-            <div className="sticky top-24 min-h-[calc(100vh-120px)] flex flex-col">
+          <div className="w-[400px] hidden xl:block flex-shrink-0">
+            <div className="sticky top-24 min-h-[calc(100vh-120px)] flex flex-col pl-8">
               {/* Share URL Box */}
-              <div className="mx-6 mt-6 mb-4">
+              <div className="w-full max-w-[320px] self-end mt-6 mb-4">
                 <div className="bg-white rounded-2xl p-4 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 bg-gray-50 px-4 py-2.5 rounded-full">
                       <span className="text-sm text-gray-600">linktree/{username}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition">
+                    <div className="flex items-center gap-2 relative">
+                      <button 
+                        onClick={async () => {
+                          const url = `${window.location.origin}/${username}`;
+                          try {
+                            await navigator.clipboard.writeText(url);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                          } catch (err) {
+                            console.error('Failed to copy:', err);
+                          }
+                        }}
+                        className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition relative"
+                        title="Copy link"
+                      >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
+                        {copied && (
+                          <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                            Copied!
+                          </span>
+                        )}
                       </button>
-                      <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition">
+                      <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition" title="Settings">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -377,7 +505,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               </div>
 
               {/* Enhance Button */}
-              <div className="mx-6 mb-6">
+              <div className="w-full max-w-[320px] self-end mb-6">
                 <div className="flex gap-2">
                   <button className="flex-1 flex items-center justify-center gap-2 bg-white px-4 py-2.5 rounded-full shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -394,10 +522,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 </div>
               </div>
 
-              {/* Mobile Preview - Centered */}
-              <div className="flex-1 flex items-center justify-center pb-8 w-full">
-                <div className="mx-auto">
-                  <MobilePreview />
+              {/* Mobile Preview - Right aligned */}
+              <div className="flex-1 flex items-start justify-end pb-8 w-full">
+                <div className="pr-4">
+                  <MobilePreview links={activePlaceholderLinks} />
                 </div>
               </div>
             </div>

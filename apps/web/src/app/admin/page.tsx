@@ -23,6 +23,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useAuth } from '@/hooks/use-auth';
 import { useLinks } from '@/hooks/use-links';
 import type { Link as LinkType } from '@linktree/shared';
+import { useAdmin } from './admin-context';
 
 // Sortable link item component
 function SortableLinkItem({
@@ -46,6 +47,26 @@ function SortableLinkItem({
   onSaveEdit: () => void;
   onCancelEdit: () => void;
 }) {
+  const [activeButtons, setActiveButtons] = useState({
+    thumbnail: false,
+    animation: false,
+    icon: false,
+    lock: false,
+    schedule: false,
+    priority: false,
+  });
+
+  const toggleButton = (key: keyof typeof activeButtons) => {
+    setActiveButtons(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const getButtonClass = (isActive: boolean) => 
+    `p-2 rounded-lg transition ${
+      isActive 
+        ? 'text-purple-600 bg-purple-50' 
+        : 'text-gray-400 hover:bg-gray-100'
+    }`;
+
   const {
     attributes,
     listeners,
@@ -132,33 +153,57 @@ function SortableLinkItem({
 
           {/* Action Icons */}
           <div className="flex items-center gap-1">
-            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition" title="Thumbnail">
+            <button 
+              onClick={() => toggleButton('thumbnail')}
+              className={getButtonClass(activeButtons.thumbnail)} 
+              title="Thumbnail"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </button>
-            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition" title="Animation">
+            <button 
+              onClick={() => toggleButton('animation')}
+              className={getButtonClass(activeButtons.animation)} 
+              title="Animation"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </button>
-            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition" title="Icon">
+            <button 
+              onClick={() => toggleButton('icon')}
+              className={getButtonClass(activeButtons.icon)} 
+              title="Icon"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
               </svg>
             </button>
-            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition" title="Lock">
+            <button 
+              onClick={() => toggleButton('lock')}
+              className={getButtonClass(activeButtons.lock)} 
+              title="Lock"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </button>
-            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition" title="Schedule">
+            <button 
+              onClick={() => toggleButton('schedule')}
+              className={getButtonClass(activeButtons.schedule)} 
+              title="Schedule"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </button>
-            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition" title="Priority">
+            <button 
+              onClick={() => toggleButton('priority')}
+              className={getButtonClass(activeButtons.priority)} 
+              title="Priority"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 11l7-7 7 7M5 19l7-7 7 7" />
               </svg>
@@ -204,9 +249,69 @@ function SortableLinkItem({
 }
 
 // Placeholder link item for empty state
-function PlaceholderLinkItem({ title }: { title: string }) {
+function PlaceholderLinkItem({ 
+  title, 
+  url,
+  isActive, 
+  isStarred,
+  clickCount,
+  onToggle,
+  onUrlChange,
+  onStar,
+  onShare
+}: { 
+  title: string; 
+  url: string;
+  isActive: boolean;
+  isStarred: boolean;
+  clickCount: number;
+  onToggle: () => void;
+  onUrlChange: (url: string) => void;
+  onStar: () => void;
+  onShare: () => void;
+}) {
+  const [isEditingUrl, setIsEditingUrl] = useState(false);
+  const [editUrl, setEditUrl] = useState(url);
+  const [showCopied, setShowCopied] = useState(false);
+  
+  // Active states for action buttons
+  const [activeButtons, setActiveButtons] = useState({
+    layout: false,
+    link: false,
+    image: false,
+    lock: false,
+    analytics: false,
+  });
+
+  const toggleButton = (key: keyof typeof activeButtons) => {
+    setActiveButtons(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleSaveUrl = () => {
+    onUrlChange(editUrl);
+    setIsEditingUrl(false);
+  };
+
+  const handleCancelUrl = () => {
+    setEditUrl(url);
+    setIsEditingUrl(false);
+  };
+
+  const handleShare = () => {
+    onShare();
+    setShowCopied(true);
+    setTimeout(() => setShowCopied(false), 2000);
+  };
+
+  const getButtonClass = (isActive: boolean) => 
+    `p-2 rounded-lg transition ${
+      isActive 
+        ? 'text-purple-600 bg-purple-50' 
+        : 'text-gray-400 hover:bg-gray-100'
+    }`;
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-3">
+    <div className={`bg-white rounded-2xl border p-4 mb-3 transition-all ${isActive ? 'border-gray-200' : 'border-gray-200 opacity-70'}`}>
       <div className="flex items-start gap-3">
         {/* Drag Handle - 6 dots */}
         <button className="text-gray-300 hover:text-gray-500 cursor-grab p-1 mt-1">
@@ -227,56 +332,114 @@ function PlaceholderLinkItem({ title }: { title: string }) {
             </button>
           </div>
 
-          {/* URL placeholder with edit icon */}
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-sm text-gray-400">URL</span>
-            <button className="text-gray-400 hover:text-gray-600">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-              </svg>
-            </button>
-          </div>
+          {/* URL input field */}
+          {isEditingUrl ? (
+            <div className="flex items-center gap-2 mb-3">
+              <input
+                type="url"
+                value={editUrl}
+                onChange={(e) => setEditUrl(e.target.value)}
+                placeholder="https://example.com"
+                className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+                autoFocus
+              />
+              <button 
+                onClick={handleSaveUrl}
+                className="text-green-600 hover:text-green-700 p-1"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
+              <button 
+                onClick={handleCancelUrl}
+                className="text-gray-400 hover:text-gray-600 p-1"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-sm text-gray-400 truncate max-w-[200px]">
+                {url || 'Add URL'}
+              </span>
+              <button 
+                onClick={() => setIsEditingUrl(true)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+            </div>
+          )}
 
           {/* Action Icons Row */}
           <div className="flex items-center gap-1">
             {/* Layout icon */}
-            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition" title="Layout">
+            <button 
+              onClick={() => toggleButton('layout')}
+              className={getButtonClass(activeButtons.layout)} 
+              title="Layout"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
               </svg>
             </button>
             {/* Link icon */}
-            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition" title="Link">
+            <button 
+              onClick={() => toggleButton('link')}
+              className={getButtonClass(activeButtons.link)} 
+              title="Link"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
               </svg>
             </button>
             {/* Image icon */}
-            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition" title="Thumbnail">
+            <button 
+              onClick={() => toggleButton('image')}
+              className={getButtonClass(activeButtons.image)} 
+              title="Thumbnail"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </button>
             {/* Star icon */}
-            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition" title="Highlight">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button 
+              onClick={onStar}
+              className={`p-2 rounded-lg transition ${isStarred ? 'text-purple-600 bg-purple-50' : 'text-gray-400 hover:bg-gray-100'}`}
+              title={isStarred ? 'Unstar' : 'Star'}
+            >
+              <svg className="w-4 h-4" fill={isStarred ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
               </svg>
             </button>
             {/* Lock icon */}
-            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition" title="Lock">
+            <button 
+              onClick={() => toggleButton('lock')}
+              className={getButtonClass(activeButtons.lock)} 
+              title="Lock"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </button>
             {/* Analytics icon */}
-            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition" title="Analytics">
+            <button 
+              onClick={() => toggleButton('analytics')}
+              className={getButtonClass(activeButtons.analytics)} 
+              title="Analytics"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </button>
-            {/* 0 clicks */}
-            <span className="text-xs text-gray-400 ml-2">0 clicks</span>
+            {/* Click count */}
+            <span className="text-xs text-gray-400 ml-2">{clickCount} clicks</span>
           </div>
         </div>
 
@@ -284,14 +447,35 @@ function PlaceholderLinkItem({ title }: { title: string }) {
         <div className="flex flex-col items-end justify-between h-full min-h-[80px]">
           {/* Share icon and Toggle */}
           <div className="flex items-center gap-2">
-            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition" title="Share">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-              </svg>
-            </button>
+            <div className="relative">
+              <button 
+                onClick={handleShare}
+                className={`p-2 rounded-lg transition ${
+                  showCopied 
+                    ? 'text-purple-600 bg-purple-50' 
+                    : 'text-gray-400 hover:bg-gray-100'
+                }`}
+                title="Copy share link"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+              </button>
+              {/* Copied tooltip */}
+              {showCopied && (
+                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap">
+                  Copied!
+                </span>
+              )}
+            </div>
             {/* Toggle Switch */}
-            <button className="relative w-11 h-6 rounded-full bg-gray-200">
-              <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm" />
+            <button 
+              onClick={onToggle}
+              className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}
+            >
+              <div 
+                className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-all duration-200 ${isActive ? 'left-[calc(100%-1.375rem)]' : 'left-0.5'}`} 
+              />
             </button>
           </div>
 
@@ -310,6 +494,7 @@ function PlaceholderLinkItem({ title }: { title: string }) {
 export default function AdminPage() {
   const { user } = useAuth();
   const { links, loading, createLink, updateLink, deleteLink, reorderLinks } = useLinks(user?.uid);
+  const { placeholderLinks, togglePlaceholderLink, updatePlaceholderLinkUrl, toggleStarLink, copyShareLink } = useAdmin();
   
   const [isAdding, setIsAdding] = useState(false);
   const [newLink, setNewLink] = useState({ title: '', url: '' });
@@ -500,20 +685,26 @@ export default function AdminPage() {
             {/* Default Example Links - shown when no links exist */}
             {links.length === 0 ? (
               <>
-                <PlaceholderLinkItem title="YouTube" />
-                <PlaceholderLinkItem title="Instagram" />
-                <PlaceholderLinkItem title="X" />
-                <PlaceholderLinkItem title="Spotify" />
-                <PlaceholderLinkItem title="Pinterest" />
-                <PlaceholderLinkItem title="TikTok" />
-                <PlaceholderLinkItem title="LinkedIn" />
-                <PlaceholderLinkItem title="Facebook" />
-                <PlaceholderLinkItem title="Snapchat" />
-                <PlaceholderLinkItem title="Twitch" />
-                <PlaceholderLinkItem title="Discord" />
-                <PlaceholderLinkItem title="WhatsApp" />
-                <PlaceholderLinkItem title="Telegram" />
-                <PlaceholderLinkItem title="Behance" />
+                {placeholderLinks
+                  .sort((a, b) => {
+                    // Sort only by star status, not by on/off toggle
+                    if (a.isStarred === b.isStarred) return 0;
+                    return a.isStarred ? -1 : 1;
+                  })
+                  .map((link) => (
+                    <PlaceholderLinkItem 
+                      key={link.id}
+                      title={link.title}
+                      url={link.url}
+                      isActive={link.isActive}
+                      isStarred={link.isStarred}
+                      clickCount={link.clickCount}
+                      onToggle={() => togglePlaceholderLink(link.id)}
+                      onUrlChange={(url) => updatePlaceholderLinkUrl(link.id, url)}
+                      onStar={() => toggleStarLink(link.id)}
+                      onShare={() => copyShareLink(link.title)}
+                    />
+                  ))}
               </>
             ) : (
               <>

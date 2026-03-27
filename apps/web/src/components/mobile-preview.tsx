@@ -3,6 +3,23 @@
 import { useAuth } from '@/hooks/use-auth';
 import { useLinks } from '@/hooks/use-links';
 
+// Custom scrollbar styles for the mobile preview
+const scrollbarStyles = `
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 3px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+`;
+
 interface MobilePreviewProps {
   links?: { id: string; title: string; url: string; isActive: boolean }[];
 }
@@ -26,12 +43,12 @@ export default function MobilePreview({ links: propLinks }: MobilePreviewProps) 
   const username = user?.displayName?.toLowerCase().replace(/\s+/g, '') || 'user';
 
   return (
-    <div className="flex justify-center">
-      <div className="relative">
-        {/* Phone Frame */}
-        <div className="bg-black rounded-[40px] p-2 shadow-2xl">
+    <>
+      <style>{scrollbarStyles}</style>
+      {/* Phone Frame - No extra wrappers */}
+      <div className="bg-black rounded-[28px] p-2 shadow-2xl">
           {/* Screen */}
-          <div className="bg-black rounded-[32px] overflow-hidden w-[260px] h-[520px] relative">
+          <div className="bg-black rounded-[24px] overflow-hidden w-[260px] h-[520px] relative">
             {/* Notch */}
             <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-16 h-6 bg-black rounded-b-2xl z-20 flex items-center justify-center">
               <div className="w-12 h-4 rounded-full flex items-center justify-center gap-1">
@@ -39,8 +56,8 @@ export default function MobilePreview({ links: propLinks }: MobilePreviewProps) 
               </div>
             </div>
             
-            {/* Content */}
-            <div className="h-full overflow-y-auto bg-black pt-8 pb-6 px-4">
+            {/* Content - Custom scrollbar */}
+            <div className="h-full overflow-y-auto bg-black pt-8 pb-6 px-4 scrollbar-thin">
               {/* Profile */}
               <div className="text-center mb-6">
                 <div className="w-16 h-16 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full mx-auto mb-3 flex items-center justify-center text-white text-xl font-semibold">
@@ -92,7 +109,6 @@ export default function MobilePreview({ links: propLinks }: MobilePreviewProps) 
             </div>
           </div>
         </div>
-      </div>
-    </div>
+    </>
   );
 }

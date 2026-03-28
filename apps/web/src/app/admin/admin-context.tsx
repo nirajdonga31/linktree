@@ -1,70 +1,89 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { useLinks } from '@/hooks/use-links';
+import type { Link } from '@linktree/shared';
 
-interface PlaceholderLink {
-  id: string;
-  title: string;
-  url: string;
-  isActive: boolean;
-  isStarred: boolean;
-  clickCount: number;
+// Extended link type with star functionality (UI-only, not persisted to DB)
+interface ExtendedLink extends Link {
+  isStarred?: boolean;
 }
 
 interface AdminContextType {
-  placeholderLinks: PlaceholderLink[];
-  togglePlaceholderLink: (id: string) => void;
-  updatePlaceholderLinkUrl: (id: string, url: string) => void;
+  // Links from Firebase
+  links: ExtendedLink[];
+  loading: boolean;
+  error: string | null;
+  // Actions
+  toggleLink: (id: string) => Promise<void>;
+  updateLinkUrl: (id: string, url: string) => Promise<void>;
+  updateLinkTitle: (id: string, title: string) => Promise<void>;
   toggleStarLink: (id: string) => void;
-  deletePlaceholderLink: (id: string) => void;
-  getActivePlaceholderLinks: () => PlaceholderLink[];
+  deleteLink: (id: string) => Promise<void>;
+  createLink: (title: string, url: string) => Promise<void>;
+  getActiveLinks: () => ExtendedLink[];
   copyShareLink: (title: string) => Promise<void>;
+  refreshLinks: () => void;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
-export function AdminProvider({ children }: { children: ReactNode }) {
-  const [placeholderLinks, setPlaceholderLinks] = useState<PlaceholderLink[]>([
-    { id: '1', title: 'YouTube', url: '', isActive: false, isStarred: false, clickCount: 0 },
-    { id: '2', title: 'Instagram', url: '', isActive: false, isStarred: false, clickCount: 0 },
-    { id: '3', title: 'X', url: '', isActive: false, isStarred: false, clickCount: 0 },
-    { id: '4', title: 'Spotify', url: '', isActive: false, isStarred: false, clickCount: 0 },
-    { id: '5', title: 'Pinterest', url: '', isActive: false, isStarred: false, clickCount: 0 },
-    { id: '6', title: 'TikTok', url: '', isActive: false, isStarred: false, clickCount: 0 },
-    { id: '7', title: 'LinkedIn', url: '', isActive: false, isStarred: false, clickCount: 0 },
-    { id: '8', title: 'Facebook', url: '', isActive: false, isStarred: false, clickCount: 0 },
-    { id: '9', title: 'Snapchat', url: '', isActive: false, isStarred: false, clickCount: 0 },
-    { id: '10', title: 'Twitch', url: '', isActive: false, isStarred: false, clickCount: 0 },
-    { id: '11', title: 'Discord', url: '', isActive: false, isStarred: false, clickCount: 0 },
-    { id: '12', title: 'WhatsApp', url: '', isActive: false, isStarred: false, clickCount: 0 },
-    { id: '13', title: 'Telegram', url: '', isActive: false, isStarred: false, clickCount: 0 },
-    { id: '14', title: 'Behance', url: '', isActive: false, isStarred: false, clickCount: 0 },
-  ]);
+export function AdminProvider({ children, userId }: { children: ReactNode; userId?: string }) {
+  const {
+    links: firebaseLinks,
+    loading,
+    error,
+    createLink: createLinkFirebase,
+    updateLink: updateLinkFirebase,
+    deleteLink: deleteLinkFirebase,
+    refresh,
+  } = useLinks(userId);
 
-  const togglePlaceholderLink = (id: string) => {
-    setPlaceholderLinks(prev => prev.map(link => 
-      link.id === id ? { ...link, isActive: !link.isActive } : link
-    ));
+  // Local state for starred status (UI-only)
+  const [starredLinks, setStarredLinks] = useState<Set<string>>(new Set());
+
+  // Combine Firebase links with local starred state
+  const links: ExtendedLink[] = firebaseLinks.map((link) => ({
+    ...link,
+    isStarred: starredLinks.has(link.id),
+  }));
+
+  const toggleLink = async (id: string) => {
+    const link = links.find((l) => l.id === id);
+    if (!link) return;
+    await updateLinkFirebase(id, { isActive: !link.isActive });
   };
 
-  const updatePlaceholderLinkUrl = (id: string, url: string) => {
-    setPlaceholderLinks(prev => prev.map(link => 
-      link.id === id ? { ...link, url } : link
-    ));
+  const updateLinkUrl = async (id: string, url: string) => {
+    await updateLinkFirebase(id, { url });
   };
 
-  const toggleStarLink = (id: string) => {
-    setPlaceholderLinks(prev => prev.map(link => 
-      link.id === id ? { ...link, isStarred: !link.isStarred } : link
-    ));
+  const updateLinkTitle = async (id: string, title: string) => {
+    await updateLinkFirebase(id, { title });
   };
 
-  const deletePlaceholderLink = (id: string) => {
-    setPlaceholderLinks(prev => prev.filter(link => link.id !== id));
+  const toggleStarLink = useCallback((id: string) => {
+    setStarredLinks((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const deleteLink = async (id: string) => {
+    await deleteLinkFirebase(id);
+  };
+
+  const createLink = async (title: string, url: string) => {
+    await createLinkFirebase({ title, url });
   };
 
   const copyShareLink = async (title: string) => {
-    const shareUrl = `${window.location.origin}/${title.toLowerCase()}`;
+    const shareUrl = `${window.location.origin}/${title.toLowerCase().replace(/\s+/g, '-')}`;
     try {
       await navigator.clipboard.writeText(shareUrl);
     } catch (err) {
@@ -72,27 +91,33 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const getActivePlaceholderLinks = () => {
-    // Return active links, sorted by starred first
-    return placeholderLinks
-      .filter(link => link.isActive)
+  const getActiveLinks = useCallback(() => {
+    return links
+      .filter((link) => link.isActive && link.url)
       .sort((a, b) => {
-        // Only sort by star status, not by on/off
+        // Starred links first
         if (a.isStarred === b.isStarred) return 0;
         return a.isStarred ? -1 : 1;
       });
-  };
+  }, [links]);
 
   return (
-    <AdminContext.Provider value={{ 
-      placeholderLinks, 
-      togglePlaceholderLink,
-      updatePlaceholderLinkUrl,
-      toggleStarLink,
-      deletePlaceholderLink,
-      getActivePlaceholderLinks,
-      copyShareLink 
-    }}>
+    <AdminContext.Provider
+      value={{
+        links,
+        loading,
+        error,
+        toggleLink,
+        updateLinkUrl,
+        updateLinkTitle,
+        toggleStarLink,
+        deleteLink,
+        createLink,
+        getActiveLinks,
+        copyShareLink,
+        refreshLinks: refresh,
+      }}
+    >
       {children}
     </AdminContext.Provider>
   );

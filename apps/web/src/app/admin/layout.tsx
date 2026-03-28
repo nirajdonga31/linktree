@@ -246,7 +246,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AdminProvider>
+    <AdminProvider userId={user?.uid}>
       <AdminLayoutInner>{children}</AdminLayoutInner>
     </AdminProvider>
   );
@@ -258,7 +258,7 @@ function AdminLayoutInner({ children }: { children: ReactNode }) {
   const [expandedSections, setExpandedSections] = useState<string[]>(['my-linktree', 'earn']);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [copied, setCopied] = useState(false);
-  const { getActivePlaceholderLinks } = useAdmin();
+  const { getActiveLinks } = useAdmin();
 
   useAuthListener();
 
@@ -277,20 +277,12 @@ function AdminLayoutInner({ children }: { children: ReactNode }) {
   }
 
   const username = user?.displayName?.toLowerCase().replace(/\s+/g, '') || 'user';
-  const activePlaceholderLinks = getActivePlaceholderLinks()
-    .sort((a, b) => {
-      // Starred links first
-      if (a.isStarred === b.isStarred) return 0;
-      return a.isStarred ? -1 : 1;
-    })
-    .map(l => ({ 
-      id: l.id, 
-      title: l.title, 
-      url: l.url || '#', 
-      isActive: l.isActive,
-      isStarred: l.isStarred,
-      clickCount: l.clickCount 
-    }));
+  const activeLinksForPreview = getActiveLinks().map(l => ({ 
+    id: l.id, 
+    title: l.title, 
+    url: l.url || '#', 
+    isActive: l.isActive,
+  }));
 
   const renderNavItem = (item: NavItem, isChild = false) => {
     const isActive = item.href && pathname === item.href;
@@ -525,7 +517,7 @@ function AdminLayoutInner({ children }: { children: ReactNode }) {
               {/* Mobile Preview - Right aligned */}
               <div className="flex-1 flex items-start justify-end pb-8 w-full">
                 <div className="pr-4">
-                  <MobilePreview links={activePlaceholderLinks} />
+                  <MobilePreview links={activeLinksForPreview} />
                 </div>
               </div>
             </div>

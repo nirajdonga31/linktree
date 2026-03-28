@@ -222,9 +222,11 @@ function SortableLinkItem({
           {/* Toggle Switch */}
           <button
             onClick={onToggle}
+            disabled={!link.url}
+            title={!link.url ? 'Add a URL to enable this link' : link.isActive ? 'Deactivate link' : 'Activate link'}
             className={`relative w-11 h-6 rounded-full transition-colors ${
               link.isActive ? 'bg-green-500' : 'bg-gray-300'
-            }`}
+            } ${!link.url ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           >
             <div
               className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${
@@ -233,15 +235,18 @@ function SortableLinkItem({
             />
           </button>
 
-          <button
-            onClick={onDelete}
-            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition opacity-0 group-hover:opacity-100"
-            title="Delete"
+          <div
+            onClick={() => {
+              console.log('DELETE CLICKED');
+              onDelete();
+            }}
+            style={{ cursor: 'pointer' }}
+            className="p-2 text-red-500 hover:bg-red-100 rounded-lg"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
-          </button>
+          </div>
         </div>
       </div>
     </div>
@@ -258,7 +263,8 @@ function PlaceholderLinkItem({
   onToggle,
   onUrlChange,
   onStar,
-  onShare
+  onShare,
+  onDelete,
 }: { 
   title: string; 
   url: string;
@@ -269,6 +275,7 @@ function PlaceholderLinkItem({
   onUrlChange: (url: string) => void;
   onStar: () => void;
   onShare: () => void;
+  onDelete: () => void;
 }) {
   const [isEditingUrl, setIsEditingUrl] = useState(false);
   const [editUrl, setEditUrl] = useState(url);
@@ -471,7 +478,9 @@ function PlaceholderLinkItem({
             {/* Toggle Switch */}
             <button 
               onClick={onToggle}
-              className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}
+              disabled={!url}
+              title={!url ? 'Add a URL to enable this link' : isActive ? 'Deactivate link' : 'Activate link'}
+              className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${isActive ? 'bg-green-500' : 'bg-gray-300'} ${!url ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               <div 
                 className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-all duration-200 ${isActive ? 'left-[calc(100%-1.375rem)]' : 'left-0.5'}`} 
@@ -480,8 +489,11 @@ function PlaceholderLinkItem({
           </div>
 
           {/* Delete icon */}
-          <button className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button 
+            onClick={onDelete}
+            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-100 rounded-lg transition"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
           </button>
@@ -494,7 +506,7 @@ function PlaceholderLinkItem({
 export default function AdminPage() {
   const { user } = useAuth();
   const { links, loading, createLink, updateLink, deleteLink, reorderLinks } = useLinks(user?.uid);
-  const { placeholderLinks, togglePlaceholderLink, updatePlaceholderLinkUrl, toggleStarLink, copyShareLink } = useAdmin();
+  const { placeholderLinks, togglePlaceholderLink, updatePlaceholderLinkUrl, toggleStarLink, deletePlaceholderLink, copyShareLink } = useAdmin();
   
   const [isAdding, setIsAdding] = useState(false);
   const [newLink, setNewLink] = useState({ title: '', url: '' });
@@ -703,6 +715,11 @@ export default function AdminPage() {
                       onUrlChange={(url) => updatePlaceholderLinkUrl(link.id, url)}
                       onStar={() => toggleStarLink(link.id)}
                       onShare={() => copyShareLink(link.title)}
+                      onDelete={() => {
+                        if (confirm(`Delete ${link.title}?`)) {
+                          deletePlaceholderLink(link.id);
+                        }
+                      }}
                     />
                   ))}
               </>
@@ -714,7 +731,18 @@ export default function AdminPage() {
                     link={link}
                     onToggle={() => handleToggle(link)}
                     onEdit={() => startEditing(link)}
-                    onDelete={() => deleteLink(link.id)}
+                    onDelete={async () => {
+                      console.log('[Admin] Delete clicked for link:', link.id);
+                      if (!confirm('Delete this link?')) return;
+                      try {
+                        console.log('[Admin] Calling deleteLink...');
+                        await deleteLink(link.id);
+                        console.log('[Admin] Delete successful');
+                      } catch (err: any) {
+                        console.error('[Admin] Delete failed:', err);
+                        alert('Failed to delete: ' + (err.message || 'Unknown error'));
+                      }
+                    }}
                     isEditing={editingId === link.id}
                     editValue={editValue}
                     onEditChange={(field, value) => setEditValue((prev) => ({ ...prev, [field]: value }))}

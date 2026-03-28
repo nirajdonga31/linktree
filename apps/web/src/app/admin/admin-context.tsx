@@ -16,6 +16,7 @@ interface AdminContextType {
   togglePlaceholderLink: (id: string) => void;
   updatePlaceholderLinkUrl: (id: string, url: string) => void;
   toggleStarLink: (id: string) => void;
+  deletePlaceholderLink: (id: string) => void;
   getActivePlaceholderLinks: () => PlaceholderLink[];
   copyShareLink: (title: string) => Promise<void>;
 }
@@ -24,11 +25,11 @@ const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export function AdminProvider({ children }: { children: ReactNode }) {
   const [placeholderLinks, setPlaceholderLinks] = useState<PlaceholderLink[]>([
-    { id: '1', title: 'YouTube', url: '', isActive: true, isStarred: false, clickCount: 12 },
-    { id: '2', title: 'Instagram', url: '', isActive: true, isStarred: false, clickCount: 8 },
-    { id: '3', title: 'X', url: '', isActive: true, isStarred: false, clickCount: 3 },
-    { id: '4', title: 'Spotify', url: '', isActive: true, isStarred: false, clickCount: 0 },
-    { id: '5', title: 'Pinterest', url: '', isActive: true, isStarred: false, clickCount: 0 },
+    { id: '1', title: 'YouTube', url: '', isActive: false, isStarred: false, clickCount: 0 },
+    { id: '2', title: 'Instagram', url: '', isActive: false, isStarred: false, clickCount: 0 },
+    { id: '3', title: 'X', url: '', isActive: false, isStarred: false, clickCount: 0 },
+    { id: '4', title: 'Spotify', url: '', isActive: false, isStarred: false, clickCount: 0 },
+    { id: '5', title: 'Pinterest', url: '', isActive: false, isStarred: false, clickCount: 0 },
     { id: '6', title: 'TikTok', url: '', isActive: false, isStarred: false, clickCount: 0 },
     { id: '7', title: 'LinkedIn', url: '', isActive: false, isStarred: false, clickCount: 0 },
     { id: '8', title: 'Facebook', url: '', isActive: false, isStarred: false, clickCount: 0 },
@@ -58,6 +59,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     ));
   };
 
+  const deletePlaceholderLink = (id: string) => {
+    setPlaceholderLinks(prev => prev.filter(link => link.id !== id));
+  };
+
   const copyShareLink = async (title: string) => {
     const shareUrl = `${window.location.origin}/${title.toLowerCase()}`;
     try {
@@ -84,6 +89,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       togglePlaceholderLink,
       updatePlaceholderLinkUrl,
       toggleStarLink,
+      deletePlaceholderLink,
       getActivePlaceholderLinks,
       copyShareLink 
     }}>

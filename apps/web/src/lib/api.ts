@@ -34,10 +34,10 @@ class ApiClient {
     return data.data;
   }
 
-  async updateLink(id: string, input: UpdateLinkInput): Promise<Link> {
+  async updateLink(id: string, userId: string, input: UpdateLinkInput): Promise<Link> {
     const data = await this.fetch(`/api/links/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(input),
+      body: JSON.stringify({ userId, ...input }),
     });
     return data.data;
   }

@@ -12,6 +12,7 @@ import {
   User as FirebaseUser 
 } from 'firebase/auth';
 import { auth, googleProvider, isFirebaseReady, getFirebaseStatus } from '@/lib/firebase';
+import { saveUser, getUser } from '@/lib/firebase-users';
 import type { User } from '@linktree/shared';
 
 interface AuthState {
@@ -86,7 +87,13 @@ export const useAuth = create<AuthState>((set, get) => ({
       
       const result = await signInWithPopup(auth, googleProvider);
       const firebaseUser = result.user;
-      const user = createUserFromFirebase(firebaseUser);
+      
+      // Check if user exists in Firestore, if not create them
+      let user = await getUser(firebaseUser.uid);
+      if (!user) {
+        user = createUserFromFirebase(firebaseUser);
+        await saveUser(user);
+      }
       
       set({ firebaseUser, user });
       localStorage.setItem('linktree_user', JSON.stringify(user));
@@ -108,7 +115,13 @@ export const useAuth = create<AuthState>((set, get) => ({
       console.log('[Auth] Attempting email sign in for:', email);
       const result = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = result.user;
-      const user = createUserFromFirebase(firebaseUser);
+      
+      // Load user from Firestore to get saved preferences
+      let user = await getUser(firebaseUser.uid);
+      if (!user) {
+        user = createUserFromFirebase(firebaseUser);
+        await saveUser(user);
+      }
       
       console.log('[Auth] Email sign in successful for:', email);
       set({ firebaseUser, user });
@@ -188,6 +201,9 @@ export const useAuth = create<AuthState>((set, get) => ({
         updatedAt: new Date().toISOString(),
       };
       
+      // Save user to Firestore
+      await saveUser(user);
+      
       console.log('[Auth] Email sign up successful for:', email);
       set({ firebaseUser, user });
       localStorage.setItem('linktree_user', JSON.stringify(user));
@@ -261,12 +277,17 @@ export function useAuthListener() {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log('[Auth] Auth state changed:', firebaseUser ? `User: ${firebaseUser.email}` : 'No user');
       setFirebaseUser(firebaseUser);
       
       if (firebaseUser) {
-        const user = createUserFromFirebase(firebaseUser);
+        // Load user from Firestore to get saved preferences
+        let user = await getUser(firebaseUser.uid);
+        if (!user) {
+          user = createUserFromFirebase(firebaseUser);
+          await saveUser(user);
+        }
         setUser(user);
         localStorage.setItem('linktree_user', JSON.stringify(user));
       } else {
